@@ -1,0 +1,86 @@
+<html>
+<head></head>
+<body>
+    <script type="text/javascript">
+        var sock = null;
+		var canv = null;
+        var wsurl = "ws://127.0.0.1:80/ws";
+
+		function getMousePos(canvas, evt) {
+		    var rect = canvas.getBoundingClientRect();
+		    return {
+		      x: evt.clientX - rect.left,
+		      y: evt.clientY - rect.top
+		    };
+		};
+
+        window.onload = function() {		
+			canv = document.getElementById("theCanvas");
+	        var ctx = canv.getContext("2d");
+			
+            console.log("onload");
+
+            sock = new WebSocket(wsurl);
+
+            sock.onopen = function() {
+                console.log("connected to " + wsurl);
+            }
+
+            sock.onclose = function(e) {
+                console.log("connection closed (" + e.code + ")");
+            }
+
+            sock.onmessage = function(e) {
+				var img=new Image();
+				img.src=e.data;
+				ctx.drawImage(img,0,0);
+            }
+			
+			canv.onmousedown= function(e) {
+	    		e.preventDefault();
+	    
+				sock.send('mlbtn1');
+			    
+			    return false;
+			};
+
+			canv.onmouseup= function(e) {
+	    		e.preventDefault();
+	    
+				sock.send('mlbtn0');
+			    
+			    return false;
+			};
+			
+			canv.onmousemove= function(e) {
+	    		e.preventDefault();
+	    
+			    var mouse = getMousePos(canv,e);
+			    
+				sock.send('mx'+mouse.x+'my'+mouse.y);
+			    
+			    return false;
+			};
+
+			
+			window.onkeydown= function(e) {
+	    		e.preventDefault();
+			    
+				sock.send('kdn'+e.keyCode);
+			    
+			    return false;
+			};
+			
+			window.onkeyup= function(e) {
+	    		e.preventDefault();
+			    
+				sock.send('kup'+e.keyCode);
+			    
+			    return false;
+			};
+        };
+		
+    </script>
+	<canvas id="theCanvas" width="800" height="600"></canvas>
+</body>
+</html>
