@@ -26,4 +26,4 @@ See more in example/main.go
 ### Disclaimer
 Please consider that this is one of my first golang applications, so there are probably better ways of doing things.
 Also this is pretty cpu intensive and of course far from optimal if compared to more direct/native graphics.
-In any case I think this will provide an easy to use graphics interface that I myself missed when I started with go.
+In any case I think this will provide an easy to use, cross platform, graphics interface that I myself missed when I started with go.
