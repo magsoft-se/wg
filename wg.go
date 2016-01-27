@@ -19,47 +19,47 @@ const MAX_KEY = 127
 type LoopFunc func()
 type KeyMap [MAX_KEY]bool
 
-var ggsock *websocket.Conn = nil
-var ggimg *image.RGBA = nil
-var gmx, gmy int
-var gkeys KeyMap
-var gmlbtn, gmrbtn bool
+var wgsock *websocket.Conn = nil
+var wgimg *image.RGBA = nil
+var wgmx, wgmy int
+var wgkeys KeyMap
+var wgmlbtn, wgmrbtn bool
 
-var gloopfunc LoopFunc
+var wgLoopfunc LoopFunc
 
 func GetImage() *image.RGBA {
-	return ggimg
+	return wgimg
 }
 
 func GetMX() int {
-	return gmx
+	return wgmx
 }
 
 func GetMY() int {
-	return gmy
+	return wgmy
 }
 
 func GetMLBtn() bool {
-	return gmlbtn
+	return wgmlbtn
 }
 
 func GetKeys() *KeyMap {
-	return &gkeys
+	return &wgkeys
 }
 
 func GetKey(key int) bool {
-	return gkeys[key]
+	return wgkeys[key]
 }
 
 func ClearImage(col color.Color) {
-	draw.Draw(ggimg, ggimg.Bounds(), &image.Uniform{col}, image.ZP, draw.Src)
+	draw.Draw(wgimg, wgimg.Bounds(), &image.Uniform{col}, image.ZP, draw.Src)
 }
 
 func receiver(ws *websocket.Conn) {
 	var recv_data string
 	var err error
 
-	ggsock = ws
+	wgsock = ws
 
 	for {
 		if err = websocket.Message.Receive(ws, &recv_data); err != nil {
@@ -68,19 +68,19 @@ func receiver(ws *websocket.Conn) {
 		}
 
 		if strings.Index(recv_data, "mx") == 0 {
-			fmt.Sscanf(recv_data, "mx%dmy%d", &gmx, &gmy)
+			fmt.Sscanf(recv_data, "mx%dmy%d", &wgmx, &wgmy)
 
 		} else if strings.Index(recv_data, "mlbtn") == 0 {
 			var btn int
 			fmt.Sscanf(recv_data, "mlbtn%d", &btn)
-			gmlbtn = (btn == 1)
+			wgmlbtn = (btn == 1)
 
 		} else if strings.Index(recv_data, "kdn") == 0 {
 			var key int
 			fmt.Sscanf(recv_data, "kdn%d", &key)
 
 			if key >= 0 && key < MAX_KEY {
-				gkeys[key] = true
+				wgkeys[key] = true
 			}
 
 		} else if strings.Index(recv_data, "kup") == 0 {
@@ -88,7 +88,7 @@ func receiver(ws *websocket.Conn) {
 			fmt.Sscanf(recv_data, "kup%d", &key)
 
 			if key >= 0 && key < MAX_KEY {
-				gkeys[key] = false
+				wgkeys[key] = false
 			}
 		}
 	}
@@ -103,14 +103,14 @@ func sender() {
 	buf := new(bytes.Buffer)
 
 	for {
-		if ggsock != nil {
-			gloopfunc()
+		if wgsock != nil {
+			wgLoopfunc()
 
 			buf.Reset()
-			jpeg.Encode(buf, ggimg, nil)
+			jpeg.Encode(buf, wgimg, nil)
 			enc := base64.StdEncoding.EncodeToString(buf.Bytes())
 
-			if err = websocket.Message.Send(ggsock, "data:image/jpeg;base64,"+enc); err != nil {
+			if err = websocket.Message.Send(wgsock, "data:image/jpeg;base64,"+enc); err != nil {
 				fmt.Println("Can't send " + err.Error())
 				break
 			}
@@ -121,12 +121,12 @@ func sender() {
 }
 
 func Start(width, height, port int, loopfunc func()) {
-	gloopfunc = loopfunc
+	wgLoopfunc = loopfunc
 
 	http.Handle("/ws", websocket.Handler(receiver))
 	http.HandleFunc("/", serveStatic)
 
-	ggimg = image.NewRGBA(image.Rect(0, 0, width, height))
+	wgimg = image.NewRGBA(image.Rect(0, 0, width, height))
 
 	fmt.Println("Handle...")
 	go sender()
